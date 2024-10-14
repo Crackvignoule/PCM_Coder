@@ -80,3 +80,15 @@ plt.plot(lost_signal_2[:1000], label='Lost Signal (p=10^-2)')
 plt.legend()
 
 plt.show()
+
+
+
+
+# 1. Quantification à 1 bit/éch :
+# Lorsque la résolution du quantificateur devient 1 bit/éch, le signal est réduit à deux niveaux possibles (par exemple, -1 et 1). Cela entraîne une perte significative de la qualité du signal, car les nuances intermédiaires sont perdues. Le signal devient très bruité et déformé.
+
+# 2. Sensibilité de l'ouïe à la latence :
+# Le sens de l'ouïe humaine est effectivement sensible à la latence. Des retards de transmission peuvent provoquer des échos ou des interruptions perceptibles dans le son. Des latences supérieures à 20-30 ms peuvent être perceptibles et gênantes pour l'utilisateur.
+
+# 3. Simulation de la perte de paquets :
+# La perte de paquets peut être simulée en omettant certains paquets de la transmission. Cela peut entraîner des interruptions dans le signal audio. Avec une probabilité de perte de paquet de ( p = 10^{-3} ), la perte sera rare, mais avec ( p = 10^{-2} ), la perte sera plus fréquente et plus perceptible. Les conclusions peuvent inclure l'impact sur la qualité audio et la robustesse du système de codage face à la perte de paquets.
