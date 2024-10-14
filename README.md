@@ -1,3 +1,6 @@
+Lien google docs : https://docs.google.com/document/d/11a2RUUIz6Qj_WmRjsjtVaEH0H74NKgQbIN6jzMXGLjA/edit?usp=sharing
+
+
 # Analyse du PCM - DPCM - Partie 1
 Nous nous proposons d'étudier l'impact des erreurs "type" induites par un réseau, sur un codeur de type PCM (ou DPCM)
 
