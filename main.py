@@ -8,32 +8,11 @@ def create_sine_wave(frequency, duration, sample_rate):
     signal = np.sin(2 * np.pi * frequency * t)
     return signal
 
-# 1.a. Créer une tonalité sinusoïdale de fréquence 2kHz, de 3 sec de durée
-frequency = 2000  # 2kHz
-duration = 3  # 3 seconds
-sample_rate = frequency * 10  # 10 samples per period
-signal = create_sine_wave(frequency, duration, sample_rate)
-
-# Reproduire cette tonalité sur les haut-parleurs de votre ordinateur
-sd.play(signal, sample_rate)
-sd.wait()
-
-# 1.b. Quantifier ce signal en (int) à 8 bits/éch
-quantized_signal_8bit = np.round(signal * 127).astype(np.int8)
-
 # 1.c. Quantifier ce signal en utilisant différentes résolutions
 def quantize_signal(signal, bits):
     levels = 2 ** bits
     quantized_signal = np.round(signal * (levels // 2 - 1)).astype(np.int8)
     return quantized_signal
-
-quantized_signal_6bit = quantize_signal(signal, 6)
-quantized_signal_4bit = quantize_signal(signal, 4)
-quantized_signal_3bit = quantize_signal(signal, 3)
-quantized_signal_2bit = quantize_signal(signal, 2)
-
-# 1.d. Quantifier ce signal en utilisant une résolution de 1 bit/éch
-quantized_signal_1bit = quantize_signal(signal, 1)
 
 # 2. Simuler la latence d'un réseau fonctionnant en mode paquet
 def simulate_network_latency(signal, sample_rate, packet_size, latencies):
@@ -45,10 +24,6 @@ def simulate_network_latency(signal, sample_rate, packet_size, latencies):
         delayed_signal[start_index:start_index + packet_size] = np.roll(packet, delay)
     return delayed_signal
 
-latencies = [0, 1, 2, 3, 4]  # Different transmission delays
-packet_size = 2  # 2 samples per packet
-delayed_signal = simulate_network_latency(quantized_signal_8bit, sample_rate, packet_size, latencies)
-
 # 3. Simuler la perte de paquets
 def simulate_packet_loss(signal, sample_rate, packet_size, loss_probability):
     packets = [signal[i:i + packet_size] for i in range(0, len(signal), packet_size)]
@@ -59,36 +34,78 @@ def simulate_packet_loss(signal, sample_rate, packet_size, loss_probability):
             lost_signal[start_index:start_index + packet_size] = packet
     return lost_signal
 
-loss_probability_1 = 10**-3
-loss_probability_2 = 10**-2
-lost_signal_1 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_1)
-lost_signal_2 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_2)
+# Main function to execute the steps
+def main():
+    # 1.a. Créer une tonalité sinusoïdale de fréquence 2kHz, de 3 sec de durée
+    frequency = 2000  # 2kHz
+    duration = 3  # 3 seconds
+    sample_rate = frequency * 10  # 10 samples per period
+    signal = create_sine_wave(frequency, duration, sample_rate)
 
-# Plotting the signals for visualization
-plt.figure(figsize=(15, 10))
-plt.subplot(3, 1, 1)
-plt.plot(signal[:1000], label='Original Signal')
-plt.legend()
+    # Reproduire cette tonalité sur les haut-parleurs de votre ordinateur
+    sd.play(signal, sample_rate)
+    sd.wait()
 
-plt.subplot(3, 1, 2)
-plt.plot(delayed_signal[:1000], label='Delayed Signal')
-plt.legend()
+    # 1.b. Quantifier ce signal en (int) à 8 bits/éch
+    quantized_signal_8bit = np.round(signal * 127).astype(np.int8)
 
-plt.subplot(3, 1, 3)
-plt.plot(lost_signal_1[:1000], label='Lost Signal (p=10^-3)')
-plt.plot(lost_signal_2[:1000], label='Lost Signal (p=10^-2)')
-plt.legend()
+    # Quantifier ce signal en utilisant différentes résolutions
+    quantized_signal_6bit = quantize_signal(signal, 6)
+    quantized_signal_4bit = quantize_signal(signal, 4)
+    quantized_signal_3bit = quantize_signal(signal, 3)
+    quantized_signal_2bit = quantize_signal(signal, 2)
+    quantized_signal_1bit = quantize_signal(signal, 1)
 
-plt.show()
+    # Simuler la latence d'un réseau fonctionnant en mode paquet
+    latencies = [0, 1, 2, 3, 4]  # Different transmission delays
+    packet_size = 2  # 2 samples per packet
+    delayed_signal = simulate_network_latency(quantized_signal_8bit, sample_rate, packet_size, latencies)
 
+    # Simuler la perte de paquets
+    loss_probability_1 = 10**-3
+    loss_probability_2 = 10**-2
+    lost_signal_1 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_1)
+    lost_signal_2 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_2)
 
+    slice_length = 200
 
+    # Plotting the signals for visualization
+    plt.figure(figsize=(15, 18))
 
-# 1. Quantification à 1 bit/éch :
-# Lorsque la résolution du quantificateur devient 1 bit/éch, le signal est réduit à deux niveaux possibles (par exemple, -1 et 1). Cela entraîne une perte significative de la qualité du signal, car les nuances intermédiaires sont perdues. Le signal devient très bruité et déformé.
+    plt.subplot(8, 1, 1)
+    plt.plot(signal[:slice_length], label='Original Signal')
+    plt.legend()
 
-# 2. Sensibilité de l'ouïe à la latence :
-# Le sens de l'ouïe humaine est effectivement sensible à la latence. Des retards de transmission peuvent provoquer des échos ou des interruptions perceptibles dans le son. Des latences supérieures à 20-30 ms peuvent être perceptibles et gênantes pour l'utilisateur.
+    plt.subplot(8, 1, 2)
+    plt.plot(quantized_signal_6bit[:slice_length], label='Quantized Signal (6-bit)')
+    plt.legend()
 
-# 3. Simulation de la perte de paquets :
-# La perte de paquets peut être simulée en omettant certains paquets de la transmission. Cela peut entraîner des interruptions dans le signal audio. Avec une probabilité de perte de paquet de ( p = 10^{-3} ), la perte sera rare, mais avec ( p = 10^{-2} ), la perte sera plus fréquente et plus perceptible. Les conclusions peuvent inclure l'impact sur la qualité audio et la robustesse du système de codage face à la perte de paquets.
+    plt.subplot(8, 1, 3)
+    plt.plot(quantized_signal_4bit[:slice_length], label='Quantized Signal (4-bit)')
+    plt.legend()
+
+    plt.subplot(8, 1, 4)
+    plt.plot(quantized_signal_3bit[:slice_length], label='Quantized Signal (3-bit)')
+    plt.legend()
+
+    plt.subplot(8, 1, 5)
+    plt.plot(quantized_signal_2bit[:slice_length], label='Quantized Signal (2-bit)')
+    plt.legend()
+
+    plt.subplot(8, 1, 6)
+    plt.plot(quantized_signal_1bit[:slice_length], label='Quantized Signal (1-bit)')
+    plt.legend()
+
+    plt.subplot(8, 1, 7)
+    plt.plot(delayed_signal[:slice_length], label='Delayed Signal')
+    plt.legend()
+
+    plt.subplot(8, 1, 8)
+    plt.plot(lost_signal_1[:slice_length], label='Lost Signal (p=10^-3)')
+    plt.plot(lost_signal_2[:slice_length], label='Lost Signal (p=10^-2)')
+    plt.legend()
+
+    plt.show()
+
+if __name__ == "__main__":
+    main()
