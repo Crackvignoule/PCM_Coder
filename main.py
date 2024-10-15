@@ -2,20 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sounddevice as sd
 
-# 1. Création d'un signal de référence
 def create_sine_wave(frequency, duration, sample_rate):
+    """ Create a sine wave with the given frequency, duration and sample rate """
     t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
     signal = np.sin(2 * np.pi * frequency * t)
     return t, signal
 
-# 1.c. Quantifier ce signal en utilisant différentes résolutions
 def quantize_signal(signal, bits):
+    """ Quantize the signal to the given number of bits """
     levels = 2 ** bits
     quantized_signal = np.round(signal * (levels // 2 - 1)).astype(np.int8)
     return quantized_signal
 
-# 2. Simuler la latence d'un réseau fonctionnant en mode paquet
-def simulate_network_latency(signal, sample_rate, packet_size, latencies):
+def simulate_network_latency(signal, packet_size, latencies):
+    """ Simulate network latency by delaying packets in the signal """
     packets = [signal[i:i + packet_size] for i in range(0, len(signal), packet_size)]
     delayed_signal = np.zeros_like(signal)
     for i, packet in enumerate(packets):
@@ -24,8 +24,8 @@ def simulate_network_latency(signal, sample_rate, packet_size, latencies):
         delayed_signal[start_index:start_index + packet_size] = np.roll(packet, delay)
     return delayed_signal
 
-# 3. Simuler la perte de paquets
-def simulate_packet_loss(signal, sample_rate, packet_size, loss_probability):
+def simulate_packet_loss(signal, packet_size, loss_probability):
+    """ Simulate packet loss by dropping packets in the signal """
     packets = [signal[i:i + packet_size] for i in range(0, len(signal), packet_size)]
     lost_signal = np.zeros_like(signal)
     for i, packet in enumerate(packets):
@@ -34,7 +34,6 @@ def simulate_packet_loss(signal, sample_rate, packet_size, loss_probability):
             lost_signal[start_index:start_index + packet_size] = packet
     return lost_signal
 
-# Main function to execute the steps
 def main():
     # 1.a. Créer une tonalité sinusoïdale de fréquence 2kHz, de 3 sec de durée
     frequency = 2000  # 2kHz
@@ -46,31 +45,29 @@ def main():
     sd.play(signal, sample_rate)
     sd.wait()
 
-    # 1.b. Quantifier ce signal en (int) à 8 bits/éch
+    # 1.b+c Quantifier ce signal en utilisant différentes résolutions
     quantized_signal_8bit = np.round(signal * 127).astype(np.int8)
-
-    # Quantifier ce signal en utilisant différentes résolutions
     quantized_signal_6bit = quantize_signal(signal, 6)
     quantized_signal_4bit = quantize_signal(signal, 4)
     quantized_signal_3bit = quantize_signal(signal, 3)
     quantized_signal_2bit = quantize_signal(signal, 2)
     quantized_signal_1bit = quantize_signal(signal, 1)
 
-    # Simuler la latence d'un réseau fonctionnant en mode paquet
+    # 2. Simuler la latence d'un réseau fonctionnant en mode paquet
     latencies = [0, 1, 2, 3, 4]  # Different transmission delays
     packet_size = 2  # 2 samples per packet
-    delayed_signal = simulate_network_latency(quantized_signal_8bit, sample_rate, packet_size, latencies)
+    delayed_signal = simulate_network_latency(quantized_signal_8bit, packet_size, latencies)
 
-    # Simuler la perte de paquets
+    # 3. Simuler la perte de paquets
     loss_probability_1 = 10**-3
     loss_probability_2 = 10**-2
-    lost_signal_1 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_1)
-    lost_signal_2 = simulate_packet_loss(quantized_signal_8bit, sample_rate, packet_size, loss_probability_2)
+    lost_signal_1 = simulate_packet_loss(quantized_signal_8bit, packet_size, loss_probability_1)
+    lost_signal_2 = simulate_packet_loss(quantized_signal_8bit, packet_size, loss_probability_2)
 
     slice_length = 100
     t_slice = t[:slice_length]
 
-    # Plotting the signals for visualization
+    # Plotting the signals
     plt.figure(figsize=(15, 18))
 
     plt.subplot(4, 2, 1)
