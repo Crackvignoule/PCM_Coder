@@ -9,8 +9,15 @@ def create_sine_wave(frequency, duration, sample_rate):
 
 def quantize_signal(signal, bits):
     """ Quantize the signal to the given number of bits """
-    levels = 2 ** bits
-    quantized_signal = np.round(signal * (levels // 2 - 1)).astype(np.int8)
+    min_signal = np.min(signal)
+    max_signal = np.max(signal)
+    levels = 2**bits
+    quantized_signal = np.round(
+        (signal - min_signal) / (max_signal - min_signal) * (levels - 1)
+    )
+    quantized_signal = (
+        quantized_signal / (levels - 1) * (max_signal - min_signal) + min_signal
+    )
     return quantized_signal
 
 def encode_signal(signal, encoding_type="PCM"):
@@ -45,7 +52,7 @@ def simulate_packet_loss(signal, packet_size, loss_probability):
             lost_signal[start_index:start_index + packet_size] = packet
     return lost_signal
 
-def plot_signal_subplot(position, t_slice, original_signal, quantized_signal, label, nrow=4, ncol=2, norm=True, show_error=True, tolerance=1e-3):
+def plot_signal_subplot(position, t_slice, original_signal, quantized_signal, label, nrow=4, ncol=2, norm=True, show_error=True, tolerance=0):
     plt.subplot(nrow, ncol, position)
     plt.plot(t_slice, original_signal, label='Original Signal')
     
@@ -54,13 +61,15 @@ def plot_signal_subplot(position, t_slice, original_signal, quantized_signal, la
         quantized_signal = quantized_signal / np.max(quantized_signal)
     
     plt.plot(t_slice, quantized_signal, label=label, linestyle='--')
+    # PLOT ONLY POINTS
+    # plt.scatter(t_slice, quantized_signal, label=label, color='orange')
     
     if show_error:
         error_plotted = False
         for t_val, orig, quant in zip(t_slice, original_signal, quantized_signal):
             if abs(orig - quant) > tolerance:
-                plt.plot(t_val, quant, 'ro', label='Error' if not error_plotted else "")  # Red dot at the quantized point
-                plt.vlines(t_val, orig, quant, colors='r', linestyles='dotted')  # Vertical line
+                plt.plot(t_val, quant, 'ro')  # Red dot at the quantized point
+                plt.vlines(t_val, orig, quant, colors='k', linestyles='dotted', label='Quantization Error' if not error_plotted else "")  # Vertical line
                 error_plotted = True
     
     plt.xlabel('Time [s]')
